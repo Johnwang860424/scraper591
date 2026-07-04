@@ -1,4 +1,4 @@
-const { firefox } = require('playwright'); 
+const { firefox } = require('playwright');
 
 // 設定執行間隔：10 分鐘
 const INTERVAL = 10 * 60 * 1000;
@@ -6,10 +6,7 @@ const INTERVAL = 10 * 60 * 1000;
 async function boostTraffic() {
   const url = process.env.URL;
 
-  const browser = await firefox.launch({
-    headless: false,
-    args: ['--start-maximized'],
-  });
+  const browser = await firefox.launch();
 
   const context = await browser.newContext({
     viewport: {
@@ -25,7 +22,7 @@ async function boostTraffic() {
 
   await page.addInitScript(() => {
     const originalOpen = window.open;
-    window.open = function(url, ...args) {
+    window.open = function (url, ...args) {
       if (!url || url === 'about:blank') {
         console.log('阻止了約 about:blank 的開啟');
         return null;
@@ -35,7 +32,7 @@ async function boostTraffic() {
     window.addEventListener('beforeunload', (e) => {
       e.preventDefault();
     });
-    
+
     try {
       const proto = window.location.constructor.prototype;
       const desc = Object.getOwnPropertyDescriptor(proto, 'href');
@@ -49,7 +46,7 @@ async function boostTraffic() {
           }
         });
       }
-    } catch (_) {}
+    } catch (_) { }
   });
 
   try {
@@ -85,7 +82,7 @@ async function boostTraffic() {
   } catch (error) {
     console.error(`執行過程中發生異常: ${error.message}`);
     console.error(`[除錯] 當時頁面 URL: ${page.url()}`);
-    try { await page.screenshot({ path: `debug_${Date.now()}.png` }); } catch (_) {}
+    try { await page.screenshot({ path: `debug_${Date.now()}.png` }); } catch (_) { }
   } finally {
     await context.close();
     await browser.close();
