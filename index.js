@@ -1,4 +1,4 @@
-const { firefox } = require('playwright');
+const { chromium, devices } = require('playwright');
 
 // 設定執行間隔：10 分鐘
 const INTERVAL = 10 * 60 * 1000;
@@ -6,16 +6,17 @@ const INTERVAL = 10 * 60 * 1000;
 async function boostTraffic() {
   const url = process.env.URL;
 
-  const browser = await firefox.launch();
+  const browser = await chromium.launch();
 
+  const iPhone = devices['iPhone 13'];
   const context = await browser.newContext({
+    ...iPhone,
     viewport: {
-      width: 1280 + Math.floor(Math.random() * 100),
-      height: 800 + Math.floor(Math.random() * 100),
+      width: iPhone.viewport.width + Math.floor(Math.random() * 30),
+      height: iPhone.viewport.height + Math.floor(Math.random() * 60),
     },
     locale: 'zh-TW',
     timezoneId: 'Asia/Taipei',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/115.0',
   });
 
   const page = await context.newPage();
@@ -50,7 +51,7 @@ async function boostTraffic() {
   });
 
   try {
-    console.log(`[${new Date().toLocaleTimeString()}] 開始模擬真人瀏覽 (Firefox)...`);
+    console.log(`[${new Date().toLocaleTimeString()}] 開始模擬真人瀏覽 (Chromium Mobile)...`);
 
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
     console.log(`[資訊] 頁面載入完成，URL: ${page.url()}`);
@@ -90,8 +91,16 @@ async function boostTraffic() {
   }
 }
 
-boostTraffic();
+// 在 GitHub Actions（CI）環境只跑一次就結束，由 workflow 的 cron 負責排程；
+// 本機執行時則維持每隔 INTERVAL 定時重複。
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 
-setInterval(() => {
-  boostTraffic();
-}, INTERVAL);
+(async () => {
+  await boostTraffic();
+
+  if (!isCI) {
+    setInterval(() => {
+      boostTraffic();
+    }, INTERVAL);
+  }
+})();
