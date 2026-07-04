@@ -61,11 +61,17 @@ async function boostTraffic() {
       await page.waitForTimeout(500 + Math.random() * 1000);
     }
 
-    const agreeBtn = page.locator('.statement-confirm');
-    if (await agreeBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await agreeBtn.click();
-      console.log('已處理隱私聲明');
-    }
+    // 彈窗 1：隱私聲明（同意）
+    const agreeBtn = page.locator('.van-dialog__confirm', { hasText: '同意' });
+    await agreeBtn.click({ timeout: 7000 })
+      .then(() => console.log('已關閉隱私聲明彈窗'))
+      .catch(() => console.log('未出現隱私聲明彈窗'));
+
+    // 彈窗 2：填寫問卷（按下同意後才會出現）
+    const surveyClose = page.locator('.questionnaire-entry .icon-close');
+    await surveyClose.click({ timeout: 7000 })
+      .then(() => console.log('已關閉問卷彈窗'))
+      .catch(() => console.log('未出現問卷彈窗'));
 
     console.log('正在模擬閱讀物件資訊...');
     for (let i = 0; i < 5; i++) {
